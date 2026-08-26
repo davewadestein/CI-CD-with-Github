@@ -139,7 +139,7 @@ A GitHub-hosted runner starts as a fresh environment. Your repository contents a
 Add this step **before** the other steps:
 
 ```yaml
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 ```
 
 Your complete workflow should now look like:
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Show environment
         run: |
