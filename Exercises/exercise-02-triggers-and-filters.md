@@ -10,6 +10,7 @@ By the end of this exercise, you should be able to recognize and explain:
 - branch filters
 - path filters
 - `workflow_dispatch`
+- `github.event_name`
 - the difference between `src/*` and `src/**`
 - why workflows should run only when they are relevant
 
@@ -65,11 +66,45 @@ on:
       - main
 ```
 
+Also add this step so you can see what event triggered the workflow:
+
+```yaml
+      - name: Show trigger
+        run: echo "Triggered by ${{ github.event_name }}"
+```
+
+Your `steps` section should now include:
+
+```yaml
+steps:
+  - uses: actions/checkout@v7
+
+  - name: Show trigger
+    run: echo "Triggered by ${{ github.event_name }}"
+
+  - name: Show environment
+    run: |
+      echo "Hello from GitHub Actions"
+      uname -a
+      pwd
+
+  - name: List files
+    run: ls -la
+```
+
 Commit and push the change.
 
-Because you changed the workflow file itself, this push may cause the workflow to run automatically.
+Because you changed the workflow file itself, this push should trigger the workflow automatically.
 
 Open the **Actions** tab and inspect the new workflow run.
+
+Expand the **Show trigger** step.
+
+You should see:
+
+```text
+Triggered by push
+```
 
 ---
 
@@ -79,12 +114,43 @@ Be prepared to answer:
 
 1. What caused this workflow run?
 2. Which branch triggered it?
-3. Can the workflow still be run manually?
-4. Why might it be useful to keep `workflow_dispatch` even when `push` is configured?
+3. What does `${{ github.event_name }}` tell you?
+4. Can the workflow still be run manually?
+5. Why might it be useful to keep `workflow_dispatch` even when `push` is configured?
 
 ---
 
-## Part 2 — Trigger the Workflow with a Repository Change
+## Part 2 — Compare Automatic and Manual Runs
+
+Run the same workflow manually:
+
+1. Open the **Actions** tab
+2. Select the **CI** workflow
+3. Click **Run workflow**
+4. Open the new run
+5. Expand the **Show trigger** step
+
+This time you should see:
+
+```text
+Triggered by workflow_dispatch
+```
+
+### Key Observation
+
+The same workflow can run for different reasons.
+
+The value of:
+
+```yaml
+${{ github.event_name }}
+```
+
+tells you which event caused the current run.
+
+---
+
+## Part 3 — Trigger the Workflow with a Repository Change
 
 Make a small change to:
 
@@ -106,12 +172,17 @@ Then:
 2. Find the workflow run created by your push
 3. Open the run
 4. Confirm that the `hello` job completed successfully
+5. Confirm that **Show trigger** reports:
+
+```text
+Triggered by push
+```
 
 At this point, every push to `main` can start this workflow.
 
 ---
 
-## Part 3 — Limit the Workflow to Relevant Files
+## Part 4 — Limit the Workflow to Relevant Files
 
 Suppose this workflow only needs to run when application files under `src/` change.
 
@@ -132,7 +203,7 @@ Commit and push the change.
 
 ---
 
-## Part 4 — Test the Path Filter
+## Part 5 — Test the Path Filter
 
 You will now make two separate changes.
 
@@ -168,13 +239,14 @@ Commit and push the change.
 
 Check the **Actions** tab again.
 
-### Question
+### Questions
 
-Did the workflow run this time?
+- Did the workflow run this time?
+- What does the **Show trigger** step report?
 
 ---
 
-## Part 5 — Understand `*` vs. `**`
+## Part 6 — Understand `*` vs. `**`
 
 GitHub path filters support wildcard patterns.
 
@@ -231,6 +303,7 @@ Be prepared to discuss:
 2. What kinds of workflows might use path filters?
 3. Why would `src/**` often be safer than `src/*` for an application source directory?
 4. What is the benefit of keeping the manual `workflow_dispatch` trigger?
+5. How can you tell whether a workflow was started by a push or manually?
 
 ---
 
@@ -258,7 +331,15 @@ push:
     - 'src/**'
 ```
 
-This helps reduce unnecessary workflow runs and keeps automation focused on relevant changes.
+And this expression:
+
+```yaml
+${{ github.event_name }}
+```
+
+lets the workflow inspect which event triggered the current run.
+
+This helps make workflow behavior easier to understand and verify.
 
 ---
 
