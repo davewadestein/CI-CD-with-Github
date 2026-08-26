@@ -129,7 +129,7 @@ Add an artifact upload step to the `build` job:
           cp src/index.html dist/index.html
 
       - name: Upload build output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-dist
           path: dist/
@@ -186,7 +186,7 @@ Now modify `deploy-demo` so it downloads the artifact:
 
     steps:
       - name: Download build output
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: web-dist
           path: ./dist
@@ -236,7 +236,7 @@ build:
         cp src/index.html dist/index.html
 
     - name: Upload build output
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: web-dist
         path: dist/
@@ -247,7 +247,7 @@ deploy-demo:
 
   steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: web-dist
         path: ./dist
@@ -268,8 +268,8 @@ deploy-demo:
 Be prepared to answer:
 
 1. What does `needs: build` do?
-2. What does `actions/upload-artifact@v4` do?
-3. What does `actions/download-artifact@v4` do?
+2. What does `actions/upload-artifact@v7` do?
+3. What does `actions/download-artifact@v7` do?
 4. Why does `deploy-demo` need to download the artifact?
 5. Why not simply run the build command again in `deploy-demo`?
 
@@ -313,7 +313,7 @@ Update the upload step:
 
 ```yaml
 - name: Upload build output
-  uses: actions/upload-artifact@v4
+  uses: actions/upload-artifact@v7
   with:
     name: web-dist
     path: dist/
