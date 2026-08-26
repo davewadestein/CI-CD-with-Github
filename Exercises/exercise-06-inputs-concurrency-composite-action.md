@@ -577,4 +577,4 @@ v1.2.0
 
 1. Where does the value appear?
 2. What happens if you leave the value blank?
-3. How could a real deployment workflow use a version input?
+3. When would it be appropriate for a user to select a version, and when should the workflow determine the version automatically?
