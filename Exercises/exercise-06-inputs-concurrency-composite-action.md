@@ -154,7 +154,7 @@ production
 1. Who supplies the value for `${{ inputs.environment }}`?
 2. When does the user see the choice?
 3. Why is a choice input safer than asking someone to type any arbitrary value?
-4. Could the same workflow support both staging and production?
+4. Can one workflow use the input value to decide whether it is deploying to staging or production?
 
 ---
 
