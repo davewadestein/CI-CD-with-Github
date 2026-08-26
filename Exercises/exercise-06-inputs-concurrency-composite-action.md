@@ -387,7 +387,7 @@ Commit and push the change.
 
 # Part 10 — Verify That the Workflow Still Works
 
-Open the workflow run.
+Run the workflow, then inspect each job to confirm the pipeline still works end to end.
 
 Confirm that:
 
