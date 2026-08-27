@@ -578,3 +578,133 @@ v1.2.0
 1. Where does the value appear?
 2. What happens if you leave the value blank?
 3. When would it be appropriate for a user to select a version, and when should the workflow determine the version automatically?
+
+# Optional Exercise 6 — Go Further with Inputs, Concurrency, and Composite Actions
+
+If you finish Exercise 6 early, try one or more of the following extensions.
+
+These are optional. You do not need to complete them in order.
+
+## Option 1 — Add Another Choice Input
+
+Add:
+
+```yaml
+deployment_mode:
+  description: Deployment mode
+  required: true
+  type: choice
+  options:
+    - normal
+    - dry-run
+```
+
+Display both the environment and deployment mode.
+
+### Questions
+
+1. Why might a choice input be safer than free-form text?
+2. What other deployment decisions could be represented as controlled choices?
+
+## Option 2 — Make Concurrency Environment-Aware
+
+Change:
+
+```yaml
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+to:
+
+```yaml
+concurrency:
+  group: deploy-${{ inputs.environment }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+### Questions
+
+1. How does the selected environment affect the group?
+2. Could staging and production runs belong to different groups?
+3. Why might that be useful?
+
+## Option 3 — Add an Input to the Composite Action
+
+Update `.github/actions/prepare-build/action.yml`:
+
+```yaml
+inputs:
+  source-file:
+    description: Source file to copy
+    required: true
+```
+
+Use it:
+
+```yaml
+- name: Copy application
+  shell: bash
+  run: cp "${{ inputs.source-file }}" dist/index.html
+```
+
+Then call the action with:
+
+```yaml
+with:
+  source-file: src/index.html
+```
+
+### Questions
+
+1. What changed about the composite action?
+2. Why are inputs useful for reusable actions?
+3. Could the same action now work with another source file?
+
+## Option 4 — Add an Output to the Composite Action
+
+Add an output such as the build directory using `$GITHUB_OUTPUT`, then display it in the calling workflow.
+
+### Questions
+
+1. What information is the composite action returning?
+2. Why might outputs make reusable actions easier to connect together?
+
+## Option 5 — Reuse the Composite Action Twice
+
+Create another job that calls:
+
+```yaml
+uses: ./.github/actions/prepare-build
+```
+
+### Questions
+
+1. What logic did you avoid duplicating?
+2. If the build logic changes, how many places now need updating?
+3. Why is this useful in larger workflows?
+
+## Option 6 — Observe a Push-Triggered Run
+
+Trigger the workflow using `push` instead of `workflow_dispatch`.
+
+Inspect any step using:
+
+```yaml
+${{ inputs.environment }}
+```
+
+### Questions
+
+1. Was a manual environment choice provided?
+2. What value does the workflow see?
+3. What should a real workflow do when an expected manual input is missing?
+4. Should push-triggered runs and manually triggered deployments always behave the same way?
+
+## Optional Takeaway
+
+Advanced workflow design often comes down to making automation configurable, reusable, predictable, and safe when multiple runs happen at once.
+
+> **Which parts of this workflow should be configurable, and which parts should remain fixed?**
+
