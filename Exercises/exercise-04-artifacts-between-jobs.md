@@ -359,3 +359,86 @@ Run the workflow.
 3. What do you need to change to fix it?
 
 The upload and download steps must agree on the artifact name.
+
+# Optional Exercise 4 — Go Further with Artifacts
+
+If you finish Exercise 4 early, try one or more of the following extensions.
+
+These are optional. You do not need to complete them in order.
+
+## Option 1 — Upload a Second Artifact
+
+Add a small test report in the `test` job:
+
+```yaml
+- name: Create test report
+  run: |
+    mkdir -p reports
+    echo "All tests passed" > reports/test-report.txt
+```
+
+Then upload it:
+
+```yaml
+- name: Upload test report
+  uses: actions/upload-artifact@v7
+  with:
+    name: test-report
+    path: reports/
+```
+
+### Questions
+
+1. How many artifacts are attached to the workflow run?
+2. Which job created each artifact?
+3. Why might a real pipeline preserve test reports separately from build output?
+
+## Option 2 — Download Multiple Artifacts
+
+Download both `web-dist` and `test-report` in a later job:
+
+```yaml
+- name: Download build output
+  uses: actions/download-artifact@v7
+  with:
+    name: web-dist
+    path: ./dist
+
+- name: Download test report
+  uses: actions/download-artifact@v7
+  with:
+    name: test-report
+    path: ./reports
+```
+
+Then inspect both directories.
+
+### Questions
+
+1. Why might a release job need more than one artifact?
+2. Which artifacts represent deployable output, and which represent evidence about that output?
+
+## Option 3 — Experiment with Retention
+
+Change `retention-days: 7` to another value and run the workflow again.
+
+### Questions
+
+1. Why might build artifacts have a different retention period from test reports?
+2. Why might production release artifacts need longer retention than temporary CI output?
+
+## Option 4 — Download an Artifact from the GitHub UI
+
+Open a completed workflow run and download an artifact manually.
+
+### Questions
+
+1. Does it contain the same file that `deploy-demo` received?
+2. Why is it useful that artifacts are attached to a specific workflow run?
+3. How does this improve traceability?
+
+## Optional Takeaway
+
+Artifacts can preserve build output, test reports, scan results, logs, and release evidence.
+
+> **What output from this workflow should still exist after the runner disappears?**
