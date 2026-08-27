@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: production
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: production
+
+    permissions:
+      contents: write
+      packages: write
+
+    concurrency:
+      group: production-release
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish
+        env:
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: ./scripts/publish.sh

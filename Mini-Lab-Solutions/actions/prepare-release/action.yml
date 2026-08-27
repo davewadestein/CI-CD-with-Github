@@ -1,0 +1,17 @@
+name: Prepare release
+description: Build, scan, and package a release candidate
+
+runs:
+  using: composite
+  steps:
+    - name: Build
+      shell: bash
+      run: ./scripts/build.sh
+
+    - name: Scan
+      shell: bash
+      run: ./scripts/scan.sh
+
+    - name: Package
+      shell: bash
+      run: ./scripts/package.sh
