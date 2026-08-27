@@ -473,3 +473,117 @@ Then run the workflow again.
 1. Does the workflow still work?
 2. Which scope is narrower?
 3. Which version better follows the principle of least privilege?
+
+# Optional Exercise 5 — Go Further with Variables, Secrets, and Permissions
+
+If you finish Exercise 5 early, try one or more of the following extensions.
+
+These are optional. You do not need to complete them in order.
+
+## Option 1 — Narrow the Scope of a Variable
+
+Move:
+
+```yaml
+env:
+  REGION: ${{ vars.DEPLOY_REGION }}
+```
+
+from job scope into only the step that needs it:
+
+```yaml
+- name: Show deployment configuration
+  env:
+    REGION: ${{ vars.DEPLOY_REGION }}
+  run: echo "Deploying to $REGION"
+```
+
+### Questions
+
+1. Does the workflow still work?
+2. Which version gives `REGION` to fewer steps?
+3. Why might narrower scope be preferable?
+
+## Option 2 — Add Another Repository Variable
+
+Create a non-secret variable such as:
+
+```text
+APP_NAME=demo-web-app
+```
+
+Use it in a step:
+
+```yaml
+- name: Show application name
+  run: echo "Application is ${{ vars.APP_NAME }}"
+```
+
+### Questions
+
+1. Is `APP_NAME` sensitive?
+2. Should it be a variable or a secret?
+3. Could this value instead be defined directly in YAML?
+
+## Option 3 — Add a Condition
+
+Add a step that runs only on `main`:
+
+```yaml
+- name: Main branch message
+  if: github.ref == 'refs/heads/main'
+  run: echo "This run is on main"
+```
+
+### Questions
+
+1. What does `if:` control?
+2. How is `if:` different from `permissions:`?
+3. How is `if:` different from the `on:` trigger?
+
+## Option 4 — Compare Job Permissions
+
+Compare:
+
+```yaml
+permissions:
+  contents: read
+  packages: write
+```
+
+with:
+
+```yaml
+permissions:
+  contents: read
+```
+
+### Questions
+
+1. Which job has more GitHub authority, and which permission gives it that additional authority?
+2. Why might `build` need `packages: write`?
+3. Why should other jobs not receive additional permissions unless they need them?
+4. Which security principle does this demonstrate?
+
+## Option 5 — Remove an Unneeded Permission
+
+If the workflow is not actually publishing a GitHub package, remove:
+
+```yaml
+packages: write
+```
+
+Run the workflow again.
+
+### Questions
+
+1. Does it still succeed?
+2. What does that tell you about whether the permission was needed?
+3. Why is it safer to remove unused permissions?
+
+## Optional Takeaway
+
+Good workflow security often means reducing scope.
+
+> **Does this job or step actually need this value or permission?**
+
