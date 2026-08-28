@@ -258,7 +258,7 @@ Confirm that:
 - `web-dist` is uploaded
 - `deploy-staging` waits for `build`
 - `deploy-staging` downloads `web-dist`
-- the job is associated with the `staging` GitHub Environment
+- open the `deploy-staging` job and confirm that GitHub shows staging as the job’s environment
 - the deployment step displays the repository-configured region
 - the deployment step sees the files created by the build job
 
