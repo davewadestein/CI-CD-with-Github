@@ -1,6 +1,6 @@
 # CI-CD-with-Github
-## Dave Wade-Stein
-### Hearst / August 28, 2026
+#### Dave Wade-Stein (instructor.dws@gmail.com)
+#### Hearst / August 28, 2026
 
 * Welcome! We'll add notes/takeaways here as needed
 * [Course notes](https://github.com/davewadestein/CI-CD-with-Github/blob/main/CI_CD%20with%20GitHub%20Actions.pdf)
