@@ -1,0 +1,36 @@
+name: JavaScript Action Demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Run local JavaScript action
+        id: release
+        uses: ./.github/actions/release-info
+        with:
+          environment: ${{ inputs.environment }}
+
+      - name: Use action output
+        run: |
+          echo "Release ID from the JavaScript action:"
+          echo "${{ steps.release.outputs.release-id }}"
+          echo "Short SHA:"
+          echo "${{ steps.release.outputs.short-sha }}"
