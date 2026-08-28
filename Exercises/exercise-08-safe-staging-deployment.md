@@ -10,7 +10,7 @@ By the end of this exercise, you should be able to recognize how these ideas wor
 - artifacts
 - GitHub Environments
 - explicit permissions
-- deployment configuration
+- repository variables
 - build-once/deploy-the-same-output
 
 This exercise continues from the same repository and workflow used in Exercises 1–7.
@@ -32,6 +32,15 @@ web-dist
 ```
 
 The deployment job should already download that artifact.
+
+It should also already use the repository variable created earlier:
+
+```yaml
+env:
+  REGION: ${{ vars.DEPLOY_REGION }}
+```
+
+Keep that configuration in place.
 
 In this exercise, you will make the deployment job look more like a staging deployment.
 
@@ -86,16 +95,18 @@ Important:
 
 ---
 
-# Part 3 — Add Explicit Permissions
+# Part 3 — Keep Explicit Permissions
 
-Give the deployment job an explicit read-only token posture:
+Your deployment job should already have:
 
 ```yaml
 permissions:
   contents: read
 ```
 
-Your job should now begin something like:
+Keep that in place.
+
+For example:
 
 ```yaml
 deploy-staging:
@@ -111,7 +122,37 @@ For this classroom deployment, the job does not need repository write access.
 
 ---
 
-# Part 4 — Download the Existing Build
+# Part 4 — Keep the Existing Deployment Configuration
+
+Keep the repository-variable configuration you created earlier:
+
+```yaml
+env:
+  REGION: ${{ vars.DEPLOY_REGION }}
+```
+
+For example:
+
+```yaml
+deploy-staging:
+  needs: build
+  runs-on: ubuntu-latest
+  environment: staging
+
+  permissions:
+    contents: read
+
+  env:
+    REGION: ${{ vars.DEPLOY_REGION }}
+```
+
+This is ordinary configuration, not a secret.
+
+The important point is that the workflow reads the deployment region from a repository variable rather than hard-coding the value in the workflow file.
+
+---
+
+# Part 5 — Download the Existing Build
 
 Keep or add the artifact download step:
 
@@ -129,34 +170,6 @@ The deployment job should use the exact output that the build job already produc
 
 ---
 
-# Part 5 — Add Deployment Configuration
-
-Add a deployment-region variable to the job:
-
-```yaml
-env:
-  DEPLOY_REGION: us-west-2
-```
-
-For example:
-
-```yaml
-deploy-staging:
-  needs: build
-  runs-on: ubuntu-latest
-  environment: staging
-
-  permissions:
-    contents: read
-
-  env:
-    DEPLOY_REGION: us-west-2
-```
-
-This is ordinary configuration, not a secret.
-
----
-
 # Part 6 — Simulate the Deployment
 
 Replace the old deployment-demo step with:
@@ -165,7 +178,7 @@ Replace the old deployment-demo step with:
 - name: Deploy to staging
   run: |
     echo "Deploying to staging"
-    echo "Region: $DEPLOY_REGION"
+    echo "Region: $REGION"
     ls -R dist
 ```
 
@@ -217,7 +230,7 @@ deploy-staging:
     contents: read
 
   env:
-    DEPLOY_REGION: us-west-2
+    REGION: ${{ vars.DEPLOY_REGION }}
 
   steps:
     - name: Download build
@@ -229,7 +242,7 @@ deploy-staging:
     - name: Deploy to staging
       run: |
         echo "Deploying to staging"
-        echo "Region: $DEPLOY_REGION"
+        echo "Region: $REGION"
         ls -R dist
 ```
 
@@ -246,7 +259,7 @@ Confirm that:
 - `deploy-staging` waits for `build`
 - `deploy-staging` downloads `web-dist`
 - the job is associated with the `staging` GitHub Environment
-- the deployment step displays the configured region
+- the deployment step displays the repository-configured region
 - the deployment step sees the files created by the build job
 
 Open the workflow graph and inspect the job dependency.
@@ -259,9 +272,10 @@ Open the workflow graph and inspect the job dependency.
 2. What does `environment: staging` do?
 3. Does `environment: staging` specify the actual deployment server?
 4. Why does this job need only `contents: read`?
-5. Is `DEPLOY_REGION` a secret? Why or why not?
-6. Why does the deployment job download `web-dist` instead of rebuilding the application?
-7. What might a production GitHub Environment add that this staging exercise does not?
+5. Where does the value of `REGION` come from?
+6. Is `REGION` a secret? Why or why not?
+7. Why does the deployment job download `web-dist` instead of rebuilding the application?
+8. What might a production GitHub Environment add that this staging exercise does not?
 
 ---
 
@@ -281,6 +295,14 @@ A deployment job should not casually rebuild the application.
 
 Using the same tested artifact makes the pipeline more predictable and traceable.
 
+The deployment region is also kept as repository configuration:
+
+```yaml
+REGION: ${{ vars.DEPLOY_REGION }}
+```
+
+rather than being hard-coded in the workflow.
+
 ---
 
 # Discussion
@@ -299,4 +321,3 @@ Possible examples include:
 - a real deployment action or script
 
 You do not need to implement those features in this exercise.
-
