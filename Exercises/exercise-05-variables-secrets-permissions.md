@@ -261,19 +261,7 @@ build:
 
 The `deploy-demo` job does not need the same GitHub package publishing authority.
 
-You can leave it with:
-
-```yaml
-deploy-demo:
-  needs: build
-
-  permissions:
-    contents: read
-
-  runs-on: ubuntu-latest
-```
-
-Commit and push the change.
+You can leave it to inherit the workflow-level read permissions.
 
 ---
 
