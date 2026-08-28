@@ -253,6 +253,19 @@ A relationship in which one job, task, or component depends on another.
 In a CI/CD pipeline, dependencies often control execution order.
 
 ---
+## Retention
+
+Retention controls how long the output from a particular workflow run remains available after that run finishes.
+
+For example, run #101 produces:
+
+- web-dist
+
+...and keeps it for, say, 7 days.
+
+So even if run #102 builds a brand new web-dist, the old artifact is still tied to run #101 for later inspection (within the 7 day window).
+
+---
 
 ## Variables, Secrets, and Permissions
 
