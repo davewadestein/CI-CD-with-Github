@@ -2,7 +2,7 @@
 
 name="$1"
 
-if [ $name = admin ]; then
+if [ "$name" = admin ]; then
     echo "Welcome $name"
 fi
 
