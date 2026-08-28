@@ -11,7 +11,7 @@ By the end of this exercise, you should be able to explain:
 - why a cache can make later runs faster
 - why an artifact is still needed even when caching is enabled
 
-This exercise continues from the same repository and workflow used in Exercises 1–6.
+This exercise continues directly from the workflow you completed in Exercise 6.
 
 ---
 
@@ -33,6 +33,23 @@ It should also already use:
 - concurrency
 - a local composite action
 
+Your `test` job should already contain steps similar to:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 22
+
+  - name: Install dependencies
+    run: npm ci
+
+  - name: Run tests
+    run: npm test
+```
+
 In this exercise, you will add one new capability:
 
 ```text
@@ -43,9 +60,14 @@ dependency cache
 
 # Part 1 — Add an npm Cache
 
-Find the job that runs `npm ci`.
+Find the `test` job that runs:
 
-Before the `npm ci` step, add:
+```yaml
+- name: Install dependencies
+  run: npm ci
+```
+
+Immediately before that step, add:
 
 ```yaml
 - name: Cache npm downloads
@@ -55,11 +77,15 @@ Before the `npm ci` step, add:
     key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 ```
 
-Your relevant steps should now look similar to:
+Your relevant steps should now look like:
 
 ```yaml
 steps:
   - uses: actions/checkout@v4
+
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 22
 
   - name: Cache npm downloads
     uses: actions/cache@v4
@@ -67,7 +93,11 @@ steps:
       path: ~/.npm
       key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-  - run: npm ci
+  - name: Install dependencies
+    run: npm ci
+
+  - name: Run tests
+    run: npm test
 ```
 
 Commit and push the change.
@@ -82,7 +112,7 @@ Open:
 Repository → Actions → CI
 ```
 
-Run the workflow and open the job that contains the cache step.
+Run the workflow and open the `test` job.
 
 Look for output from:
 
@@ -94,11 +124,17 @@ On the first run, GitHub may not find an existing cache with that key.
 
 That is expected.
 
+The `npm ci` step still runs normally.
+
 ---
 
 # Part 3 — Run It Again
 
-Run the same workflow again without changing `package-lock.json`.
+Run the same workflow again without changing:
+
+```text
+package-lock.json
+```
 
 Inspect the cache step again.
 
@@ -108,13 +144,21 @@ The key idea is:
 
 > The cache can reduce repeated dependency-download work across workflow runs.
 
+The cache does **not** replace:
+
+```yaml
+npm ci
+```
+
+It gives `npm ci` a local cache of package downloads that it may be able to reuse.
+
 ---
 
 # Part 4 — Keep the Artifact
 
 Do **not** remove the existing artifact steps.
 
-Your build job should still upload:
+Your `build` job should still upload:
 
 ```text
 web-dist
@@ -158,7 +202,7 @@ Purpose:
 speed
 ```
 
-The cache helps later runs avoid downloading the same dependency data again.
+The cache helps later workflow runs avoid downloading the same dependency data again.
 
 ## Artifact
 
@@ -178,13 +222,14 @@ The artifact preserves the build output so another job can use exactly what the 
 
 # Questions
 
-1. What directory is being cached?
-2. What causes the cache key to change?
-3. Why is `${{ runner.os }}` included in the key?
-4. Does the cache replace `npm ci`?
-5. Why do we still need the `web-dist` artifact?
-6. Which one would you use for a test report: cache or artifact?
-7. Which one would you use for downloaded package data that can safely be recreated?
+1. Which job contains the cache?
+2. What directory is being cached?
+3. What causes the cache key to change?
+4. Why is `${{ runner.os }}` included in the key?
+5. Does the cache replace `npm ci`?
+6. Why do we still need the `web-dist` artifact?
+7. Which one would you use for a test report: cache or artifact?
+8. Which one would you use for downloaded package data that can safely be recreated?
 
 ---
 
@@ -197,7 +242,7 @@ Cache = speed up later work
 Artifact = preserve or pass workflow output
 ```
 
-The cache does **not** replace the build or dependency-install step.
+The cache does **not** replace the dependency-install step.
 
 The artifact does **not** exist primarily to make later runs faster.
 
@@ -220,4 +265,3 @@ Then inspect the cache step.
 ### Question
 
 Why might GitHub create or use a different cache after the lockfile changes?
-
