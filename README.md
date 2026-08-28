@@ -10,6 +10,9 @@
   * 11:30-12 Pacific / 12:30-1:00 Mountain 2:30-3 Eastern
 * what is the story w/recording?
 * hey look, I just added this
+
+## Resources
+* https://github-actions-hero.vercel.app/
   
 ### For later
 * Latest action versions:
