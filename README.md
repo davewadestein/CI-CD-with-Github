@@ -11,7 +11,7 @@
 * what is the story w/recording?
   
 ## Resources
-* https://github-actions-hero.vercel.app/
+* [Interactively learn GitHub Actions](https://github-actions-hero.vercel.app/)
   
 ### For later
 * Latest action versions:
