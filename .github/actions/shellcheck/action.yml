@@ -1,0 +1,14 @@
+name: ShellCheck in Docker
+description: Run ShellCheck inside a Docker container action
+
+inputs:
+  target:
+    description: Shell script or glob to check
+    required: true
+    default: scripts/*.sh
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.target }}
