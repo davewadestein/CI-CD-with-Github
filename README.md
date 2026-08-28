@@ -4,7 +4,7 @@
 
 * Welcome! We'll add notes/takeaways here as needed
 * [Course notes](https://github.com/davewadestein/CI-CD-with-Github/blob/main/CI_CD%20with%20GitHub%20Actions.pdf)
-
+* Student End-Of-Class Survey: https://www.research.net/r/Z7Q3FXW
 
 ### For later
 * Latest action versions:
