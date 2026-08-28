@@ -6,6 +6,7 @@ if [ "$name" = admin ]; then
     echo "Welcome $name"
 fi
 
-for file in $(ls *.txt 2>/dev/null); do
+for file in ./*.txt; do
+    [[ -e "$file" ]] || continue
     echo "$file"
 done
