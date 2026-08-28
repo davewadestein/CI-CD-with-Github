@@ -41,6 +41,18 @@ The workflow should also already demonstrate:
 - repository secrets
 - explicit permissions
 
+The `test` job should still use the normal Node.js test flow:
+
+```yaml
+- uses: actions/setup-node@v4
+
+- run: npm ci
+
+- run: npm test
+```
+
+Keep those steps in place throughout this exercise.
+
 In this exercise, you will add three new capabilities:
 
 ```text
@@ -154,7 +166,7 @@ production
 1. Who supplies the value for `${{ inputs.environment }}`?
 2. When does the user see the choice?
 3. Why is a choice input safer than asking someone to type any arbitrary value?
-4. Can one workflow use the input value to decide whether it is deploying to staging or production?
+4. Could the same workflow support both staging and production?
 
 ---
 
@@ -368,13 +380,13 @@ build:
   runs-on: ubuntu-latest
 
   steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v4
 
     - name: Prepare build
       uses: ./.github/actions/prepare-build
 
     - name: Upload build output
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: web-dist
         path: dist/
@@ -387,11 +399,14 @@ Commit and push the change.
 
 # Part 10 — Verify That the Workflow Still Works
 
-Run the workflow, then inspect each job to confirm the pipeline still works end to end.
+Open the workflow run.
 
 Confirm that:
 
-- `test` succeeds
+- `test` checks out the repository
+- `test` sets up Node.js
+- `test` runs `npm ci`
+- `test` runs `npm test`
 - `build` succeeds
 - `web-dist` is uploaded
 - `deploy-demo` downloads the artifact
@@ -407,6 +422,143 @@ You should see the steps defined inside:
 
 ---
 
+# End-of-Exercise Workflow
+
+At the end of Exercise 6, your workflow should look similar to:
+
+```yaml
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  build:
+    needs: test
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare build
+        uses: ./.github/actions/prepare-build
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          retention-days: 7
+
+  deploy-demo:
+    needs: build
+
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    env:
+      REGION: ${{ vars.DEPLOY_REGION }}
+
+    steps:
+      - name: Download build output
+        uses: actions/download-artifact@v5
+        with:
+          name: web-dist
+          path: ./dist
+
+      - name: Show selected environment
+        run: echo "Selected environment is ${{ inputs.environment }}"
+
+      - name: Show deployment configuration
+        run: echo "Deploying to $REGION"
+
+      - name: Verify deployment token
+        env:
+          TOKEN: ${{ secrets.DEMO_TOKEN }}
+        run: |
+          echo "A deployment token was provided"
+          test -n "$TOKEN"
+
+      - name: Inspect build output
+        run: |
+          ls -R dist
+          cat dist/index.html
+
+      - name: Deploy
+        run: echo "Deploying application"
+```
+
+The local composite action should be:
+
+```yaml
+name: Prepare Build
+description: Prepare the application build
+
+runs:
+  using: composite
+
+  steps:
+    - name: Create output directory
+      shell: bash
+      run: mkdir -p dist
+
+    - name: Copy application
+      shell: bash
+      run: cp src/index.html dist/index.html
+```
+
+This leaves the workflow ready for Exercise 7, where you will add caching immediately before:
+
+```yaml
+npm ci
+```
+
+---
+
 # Questions
 
 1. Where is the reusable build logic now stored?
@@ -418,6 +570,7 @@ uses: ./.github/actions/prepare-build
 
 3. Why must the repository be checked out before using the local action?
 4. What did we gain by moving the build commands into a composite action?
+5. Why did we keep `npm ci` and `npm test` in the `test` job?
 
 ---
 
@@ -537,7 +690,8 @@ Be prepared to explain:
 5. What is `${{ github.ref }}`?
 6. What is a composite action?
 7. How is a composite action different from a reusable workflow?
-8. Why do we still use `actions/checkout@v7` before calling a local composite action?
+8. Why do we still use `actions/checkout@v4` before calling a local composite action?
+9. Why does the `test` job still run `npm ci` before `npm test`?
 
 ---
 
@@ -577,7 +731,7 @@ v1.2.0
 
 1. Where does the value appear?
 2. What happens if you leave the value blank?
-3. When would it be appropriate for a user to select a version, and when should the workflow determine the version automatically?
+3. How could a real deployment workflow use a version input?
 
 # Optional Exercise 6 — Go Further with Inputs, Concurrency, and Composite Actions
 
