@@ -186,7 +186,7 @@ A GitHub-hosted runner starts as a fresh environment, so your repository files a
 This step:
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 ```
 
 checks out your repository onto the runner so later steps can work with your code and files.
