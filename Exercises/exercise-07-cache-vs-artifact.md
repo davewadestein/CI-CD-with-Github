@@ -2,16 +2,16 @@
 
 ## Goal
 
-Add dependency caching to the workflow you built through Exercise 6, then compare the role of a cache with the role of a workflow artifact.
+Add a simple workflow cache, run the workflow twice, and compare the purpose of a cache with the purpose of a workflow artifact.
 
 By the end of this exercise, you should be able to explain:
 
 - what a cache is used for
 - what an artifact is used for
-- why a cache can make later runs faster
-- why an artifact is still needed even when caching is enabled
+- how a cache can speed up later workflow runs
+- why a cache and an artifact solve different problems
 
-This exercise continues directly from the workflow you completed in Exercise 6.
+This exercise continues from the workflow you completed in Exercise 6.
 
 ---
 
@@ -33,78 +33,99 @@ It should also already use:
 - concurrency
 - a local composite action
 
-Your `test` job should already contain steps similar to:
-
-```yaml
-steps:
-  - uses: actions/checkout@v4
-
-  - uses: actions/setup-node@v4
-    with:
-      node-version: 22
-
-  - name: Install dependencies
-    run: npm ci
-
-  - name: Run tests
-    run: npm test
-```
-
 In this exercise, you will add one new capability:
 
 ```text
-dependency cache
+workflow cache
 ```
 
 ---
 
-# Part 1 — Add an npm Cache
+# Part 1 — Add a Demo Cache
 
-Find the `test` job that runs:
-
-```yaml
-- name: Install dependencies
-  run: npm ci
-```
-
-Immediately before that step, add:
+In the `test` job, after `actions/checkout`, add:
 
 ```yaml
-- name: Cache npm downloads
+- name: Restore demo cache
+  id: demo-cache
   uses: actions/cache@v4
   with:
-    path: ~/.npm
-    key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+    path: .demo-cache
+    key: demo-cache-${{ runner.os }}-${{ hashFiles('src/**') }}
 ```
 
-Your relevant steps should now look like:
+This tells GitHub Actions to save and restore the directory:
+
+```text
+.demo-cache
+```
+
+The cache key includes:
+
+```text
+runner operating system
++
+hash of the files under src/
+```
+
+If the source files change, the key changes too.
+
+---
+
+# Part 2 — Simulate Expensive Setup
+
+Immediately after the cache step, add:
 
 ```yaml
-steps:
-  - uses: actions/checkout@v4
+- name: Simulate expensive setup
+  if: steps.demo-cache.outputs.cache-hit != 'true'
+  run: |
+    echo "Cache miss — doing expensive setup"
+    mkdir -p .demo-cache
+    sleep 5
+    echo "prepared" > .demo-cache/result.txt
+```
 
-  - uses: actions/setup-node@v4
-    with:
-      node-version: 22
+Then add:
 
-  - name: Cache npm downloads
-    uses: actions/cache@v4
-    with:
-      path: ~/.npm
-      key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+```yaml
+- name: Use cached setup
+  run: cat .demo-cache/result.txt
+```
 
-  - name: Install dependencies
-    run: npm ci
+Your relevant `test` job should now look similar to:
 
-  - name: Run tests
-    run: npm test
+```yaml
+test:
+  runs-on: ubuntu-latest
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Restore demo cache
+      id: demo-cache
+      uses: actions/cache@v4
+      with:
+        path: .demo-cache
+        key: demo-cache-${{ runner.os }}-${{ hashFiles('src/**') }}
+
+    - name: Simulate expensive setup
+      if: steps.demo-cache.outputs.cache-hit != 'true'
+      run: |
+        echo "Cache miss — doing expensive setup"
+        mkdir -p .demo-cache
+        sleep 5
+        echo "prepared" > .demo-cache/result.txt
+
+    - name: Use cached setup
+      run: cat .demo-cache/result.txt
 ```
 
 Commit and push the change.
 
 ---
 
-# Part 2 — Run the Workflow
+# Part 3 — Run the Workflow
 
 Open:
 
@@ -114,47 +135,53 @@ Repository → Actions → CI
 
 Run the workflow and open the `test` job.
 
-Look for output from:
+On the first run, GitHub should not find a matching cache.
+
+You should see the simulated setup step run:
 
 ```text
-Cache npm downloads
+Cache miss — doing expensive setup
 ```
 
-On the first run, GitHub may not find an existing cache with that key.
+At the end of the job, GitHub Actions can save:
 
-That is expected.
+```text
+.demo-cache
+```
 
-The `npm ci` step still runs normally.
+for a later run.
 
 ---
 
-# Part 3 — Run It Again
+# Part 4 — Run It Again
 
-Run the same workflow again without changing:
+Run the workflow again without changing anything under:
 
 ```text
-package-lock.json
+src/
 ```
 
-Inspect the cache step again.
+Inspect the `test` job.
 
-This time, GitHub should be able to reuse the previously saved npm cache.
+This time, GitHub should restore the cache.
 
-The key idea is:
-
-> The cache can reduce repeated dependency-download work across workflow runs.
-
-The cache does **not** replace:
+Because the cache was found, this condition:
 
 ```yaml
-npm ci
+if: steps.demo-cache.outputs.cache-hit != 'true'
 ```
 
-It gives `npm ci` a local cache of package downloads that it may be able to reuse.
+should prevent the simulated expensive setup step from running.
+
+The workflow can immediately use:
+
+```text
+.demo-cache/result.txt
+```
 
 ---
 
-# Part 4 — Keep the Artifact
+# Part 5 — Keep the Artifact
 
 Do **not** remove the existing artifact steps.
 
@@ -193,7 +220,7 @@ The cache and artifact solve different problems.
 ## Cache
 
 ```text
-~/.npm
+.demo-cache/
 ```
 
 Purpose:
@@ -202,7 +229,7 @@ Purpose:
 speed
 ```
 
-The cache helps later workflow runs avoid downloading the same dependency data again.
+The cache lets later workflow runs reuse data that can safely be recreated.
 
 ## Artifact
 
@@ -222,14 +249,15 @@ The artifact preserves the build output so another job can use exactly what the 
 
 # Questions
 
-1. Which job contains the cache?
-2. What directory is being cached?
-3. What causes the cache key to change?
-4. Why is `${{ runner.os }}` included in the key?
-5. Does the cache replace `npm ci`?
-6. Why do we still need the `web-dist` artifact?
-7. Which one would you use for a test report: cache or artifact?
-8. Which one would you use for downloaded package data that can safely be recreated?
+1. What directory is being cached?
+2. What causes the cache key to change?
+3. Why is `${{ runner.os }}` included in the key?
+4. What happens on the first run?
+5. What happens on the second run?
+6. Why is the simulated setup step skipped after a cache hit?
+7. Why do we still need the `web-dist` artifact?
+8. Which one would you use for a test report: cache or artifact?
+9. Which one would you use for data that can safely be recreated but is expensive to generate?
 
 ---
 
@@ -242,26 +270,24 @@ Cache = speed up later work
 Artifact = preserve or pass workflow output
 ```
 
-The cache does **not** replace the dependency-install step.
+A cache is useful for data that can be recreated but is expensive to recreate.
 
-The artifact does **not** exist primarily to make later runs faster.
-
-Use each mechanism for the problem it is designed to solve.
+An artifact is useful when the output itself matters and must be preserved or passed to another job.
 
 ---
 
 # Optional Experiment
 
-Make a small dependency change that updates:
+Make a small change to a file under:
 
 ```text
-package-lock.json
+src/
 ```
 
-Run the workflow again.
+Commit and push the change.
 
-Then inspect the cache step.
+Then inspect the cache step again.
 
 ### Question
 
-Why might GitHub create or use a different cache after the lockfile changes?
+Why does changing a file under `src/` cause GitHub to use a different cache key?
